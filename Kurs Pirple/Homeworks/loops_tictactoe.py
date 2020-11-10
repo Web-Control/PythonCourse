@@ -1,25 +1,57 @@
 """
 Loops drawing TIC TAC TOE Play Board
 """
+#Screen size
+import tkinter as tk
+root = tk.Tk()
+screen_width = root.winfo_screenwidth()
+screen_height = root.winfo_screenheight()
+
+# importing os module  
+import os 
+  
+# Get the size 
+# of the terminal 
+size = os.get_terminal_size() 
+terminalColumns = size.columns
+terminalRows = size.lines
 
 def drawBoard(rows,columns):
     output = False
-    for row in range(rows): #0,1,2,3,4
-        if row %2 == 0:
-            for column in range(1,columns):
-                if column == 3 or column == 6:
-                    print("|",end="")
-                else:
-                    if column != 8:
-                        print(" ",end="")
+    sizeOk = True
+
+    if rows > terminalRows or columns > terminalColumns:
+        output = False
+        sizeOk = False
+
+    if sizeOk:
+        for row in range(rows):
+            if row %2 == 0:
+                for column in range(1,columns):
+                    if column%3 == 0 or column%6 == 0:
+                        print("|",end="")
                     else:
-                        print(" ")
-        else:
-            print("--------")
+                        if column != columns-1:
+                            print(" ",end="")
+                        else:
+                            print(" ")
+            else:
+                x = 1
+                while x < columns+1:
+                    if x < columns:
+                        print("-",end="")
+                    else:
+                        print("-")
+                    x = x+1
             
-    output = True
+            if row == rows-1:
+                output = True
+
+    return output
 
 
 
 
-drawBoard(5,20)
+board = drawBoard(8,200)
+print(board)
+

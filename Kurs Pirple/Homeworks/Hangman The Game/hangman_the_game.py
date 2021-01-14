@@ -67,6 +67,13 @@ def drawLettersSpaces(word):
     for letter in word:
         print(letter+" ", end = "")
         
+def checkIfLetterWasEntered(letterToCheck,actualWord):
+    for letter in actualWord:
+        if letter == letterToCheck:
+            return True
+            break
+    
+        
 def checkIfWordHaveLetter(word,letterToFind):
     wordLength = len(word)
     letterPlaces = []
@@ -84,29 +91,33 @@ def checkIfWordHaveLetter(word,letterToFind):
             return False
         x += 1
         
-englishWords = []
-
 #Import english words
+englishWords = []
 with open("mix_of_english_words.txt","r",encoding='utf-8',) as fileWithWords:
     for word in fileWithWords:
         englishWords.append(word.strip("\n"))
  
-#Initial data
-randomNumber = randint(0, 61000)
-#wordToGuess = englishWords[randomNumber]
-wordToGuess = "playstation"
-wordLength = len(wordToGuess)
 
 #Lets play :)
 while(True):
+    #Initial data
+    randomNumber = randint(0, 61000)
+    wordToGuess = englishWords[randomNumber]
+    wordLength = len(wordToGuess)
     hangmanParts = [True,True,True,True,True,True,True,False,False,False,False]
     partNumberToDraw = 7
     actualWord = []
     for letter in wordToGuess:
         actualWord.append("_")
+    player = "Player One"
     
-    playersNumber = int(input("How many players will play 1 or 2 ?   If you want to exit enter 0. \n"))
-    
+    try:
+        playersNumber = int(input("How many players will play 1 or 2 ?   If you want to exit enter 0. \n"))
+    except ValueError:
+        print(" \n")
+        print("Wrong type of data. Please try again.")
+        continue
+        
     if playersNumber == 1:
         while(True):
             print(" \n")
@@ -118,6 +129,8 @@ while(True):
             if hangmanParts[10] == True:
                 print(" \n")
                 print("YOU LOOSE !!!")
+                print(" \n")
+                print("Word to guess was: ", wordToGuess)
                 break
             
             print(" \n")
@@ -125,12 +138,19 @@ while(True):
             drawLettersSpaces(actualWord)
             print(" \n")
             
-            #Checking if playe won
+            #Checking if player won
             if actualWord.count("_") == 0:
                 print("YOU WIN !!!")
                 break
             
             enteredLetter = input("Enter your letter: ")
+            
+            if checkIfLetterWasEntered(enteredLetter,actualWord) == True:
+                print(" \n")
+                print("This letter was entered before. Try sth else.")
+                print(" \n")
+                continue
+            
             isLetterInWord = checkIfWordHaveLetter(wordToGuess,enteredLetter)
             
             #Check if word contain letter
@@ -139,9 +159,58 @@ while(True):
             else:
                 hangmanParts[partNumberToDraw] = True
                 partNumberToDraw += 1
-        
+                
+    # Two players mode   
     elif playersNumber == 2:
-        print("Two players.")
+        while(True):
+            print(" \n")
+            print("GAME FOR TWO PLAYERS")
+            
+            drawHangman(hangmanParts)
+            
+            #Checking if player loose
+            if hangmanParts[10] == True:
+                print(" \n")
+                print("YOU LOOSE !!!")
+                print(" \n")
+                print("Word to guess was: ", wordToGuess)
+                break
+            
+            print(" \n")
+            print("Word to guess:")
+            drawLettersSpaces(actualWord)
+            print(" \n")
+            
+            #Checking if player won
+            if actualWord.count("_") == 0:
+                print(player,"WON !!!")
+                break
+            
+            print(" \n")
+            print(player,"turn.")
+            enteredLetter = input("Enter your letter: ")
+            
+            if checkIfLetterWasEntered(enteredLetter,actualWord) == True:
+                print(" \n")
+                print("This letter was entered before. Try sth else.")
+                print(" \n")
+                continue
+            
+            isLetterInWord = checkIfWordHaveLetter(wordToGuess,enteredLetter)
+            
+            #Check if word contain letter
+            if isLetterInWord != False:
+                setActualWord(isLetterInWord,enteredLetter)
+            else:
+                hangmanParts[partNumberToDraw] = True
+                partNumberToDraw += 1
+            
+                #Change player
+                if player == "Player One":
+                    player = "Player Two"
+                else:
+                    player = "Player One"
+            
     elif playersNumber == 0:
         print(" \n")
         print("Hope see you soon. Good By.")

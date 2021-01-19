@@ -8,8 +8,21 @@ Created on Mon Jan 18 07:14:34 2021
 #Makau The Card Game
 
 from random import shuffle, randint
+import os
+
 
 rules = "Abc"
+
+def clearScreen():
+    os.system('cls' if os.name=='nt' else 'clear')
+
+def displayTitleBar():
+    # Clears the terminal screen, and displays a title bar.
+    clearScreen()
+    print("\n")
+    print("\t    **********************************************")
+    print("\t    ***      Macau - THE BEST CARD GAME        ***")
+    print("\t    **********************************************")
 
 def createDeck():
     deck = []
@@ -60,7 +73,12 @@ def checkIfCardCanGoOnTable(card,cardsOnTable):
             isCardOk = True
     elif cardLen == 3 and cardOnTopLen == 3:#10 on table and player also want to put 10 
        isCardOk = True
-    
+    elif  cardLen == 3 and cardOnTopLen == 2:#Some card on table and player want to put 10 card with this same suit
+        if card[2] == cardOnTop[1]:
+            isCardOk = True
+    elif cardLen == 2 and cardOnTopLen == 3:#10 on table and player want to put card with this same suit
+        if card[1] == cardOnTop[2]:
+            isCardOk = True
     return isCardOk 
             
     
@@ -90,10 +108,17 @@ print(cardDeck)
 
 while(True):
     
+    displayTitleBar()
+    
     #Get players names
-    playerOneName = str(input("Player1 please enter your name: "))
-    playerTwoName = str(input("Player2 please enter your name: "))
-  
+    playerOneName = str(input("Player1 please enter your name:\nEnter 'x' for exit.\n"))
+    if playerOneName == "x":
+        break
+    
+    playerTwoName = str(input("Player2 please enter your name:\nEnter 'x' for exit.\n"))
+    if playerTwoName == "x":
+        break
+    
     Player1 = Player(playerOneName,cardDeck)
     Player2 = Player(playerTwoName,cardDeck)
     
@@ -102,36 +127,59 @@ while(True):
     cardsOnTable.append(cardDeck[firstCard])
     cardDeck.pop(firstCard)
     
-    actualPlayer = Player1.name
+    actualPlayer = Player1
     
     while(True):
-         
-        print(actualPlayer, "is your turn.")
-        print("Your cards: " + str(Player1.cardsOnHand))
-        
+        displayTitleBar()
+        print("\n")
+        print(actualPlayer.name , "is your turn.")
+        print("Your cards: " + str(actualPlayer.cardsOnHand))
         print("\n")
         print("Card on table: " + str(cardsOnTable[-1]))
         
         if message != " ":
-            print(message)
+            print("\n")
+            print("IMPORTANT !!! - "+message)
             message = " "
         
+        try:
+            cardToPutNumber = int(input("Chose your card number or take card from the deck by entered '0': "))
+        except  ValueError:
+            message = "Wrong type of data. Please try again."
+            continue
         
-        cardToPutNumber = int(input("Chose your card number: "))
-        
-        cardToPut = Player1.cardsOnHand[cardToPutNumber-1]
-        
-        isCardOk = checkIfCardCanGoOnTable(cardToPut,cardsOnTable)
-        
-        if isCardOk:
-            cardsOnTable.append(cardToPut)
-            Player1.cardsOnHand.pop(cardToPutNumber-1)
+        if cardToPutNumber == 0:#Player take card from the deck because he doesnt have proper card on hand
+            randomNumber = randint(0, len(cardDeck)-1)
+            actualPlayer.cardsOnHand.append(cardDeck[randomNumber])
+            cardDeck.pop(randomNumber)
+            if actualPlayer == Player1:
+                actualPlayer = Player2
+            else:
+                actualPlayer = Player1    
             
         else:
-            message = "You can not put this card !!!"
-            continue
+            cardToPut = actualPlayer.cardsOnHand[cardToPutNumber-1]
             
-        
+            isCardOk = checkIfCardCanGoOnTable(cardToPut,cardsOnTable)
+            
+            if isCardOk:
+                cardsOnTable.append(cardToPut)
+                actualPlayer.cardsOnHand.pop(cardToPutNumber-1)
+                
+                #Check if player win
+                if len(actualPlayer.cardsOnHand) == 0:
+                    print("\n")
+                    print(actualPlayer.name + " WON THE GAME !!!")
+                    break
+                        
+                if actualPlayer == Player1:
+                    actualPlayer = Player2
+                else:
+                    actualPlayer = Player1    
+            else:
+                message = "You can not put this card !!!"
+                continue
+                                                              
         
         
         

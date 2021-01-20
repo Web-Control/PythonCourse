@@ -60,6 +60,16 @@ def checkCardValue(card):
         
     return value
 
+def isCardPenalty(card):
+    isPenalty = False
+    penaltyValues =[2,3,5]
+    
+    for value in penaltyValues:
+        if checkCardValue(card) == value:
+            isPenalty = True
+
+    return isPenalty
+
 def checkIfCardCanGoOnTable(card,cardsOnTable):
     
     isCardOk = False
@@ -102,6 +112,7 @@ class Player:
 
 cardDeck = createDeck()
 cardsOnTable = []
+penaltyCardsOnTable = []
 message = " "
 
 print(cardDeck)

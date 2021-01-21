@@ -38,61 +38,90 @@ def createDeck():
     shuffle(deck)   
     return deck
 
-def checkCardValue(card):
-    value = 0
-    
-    if card[0] == "A":
-        value = 11
-    elif card == "K♥" or card == "K♠":
-        value = 5
-    elif card == "K♦" or card == "K♣" or card[0] == "Q":
-        value = 0
-    elif  card[0] == "J":
-        value = 1
-    else:
-        if len(card) == 3:#If it is 10
-            card = card.strip("♠♦♥♣")
-            print(card)
-            value = int(card)
-        else:
-            if int(card[0]) in range(2,11):
-                value = int(card[0])
+class Card:
+    def __init__(self,card):
+        self.face = card
+        self.value = self.checkCardValue(card)
+        self.penalty = self.isCardPenalty(card)
+        self.isFunctional = self.isCardFunctional(card)
+        self.function = self.cardFunction(card)
         
-    return value
 
-def isCardPenalty(card):
-    isPenalty = False
-    penaltyValues =[2,3,5]
-    
-    for value in penaltyValues:
-        if checkCardValue(card) == value:
-            isPenalty = True
+    def checkCardValue(self,card):
+        value = 0
+        
+        if card[0] == "A":
+            value = 11
+        elif card == "K♥" or card == "K♠":
+            value = 5
+        elif card == "K♦" or card == "K♣" or card[0] == "Q":
+            value = 0
+        elif  card[0] == "J":
+            value = 1
+        else:
+            if len(card) == 3:#If it is 10
+                card = card.strip("♠♦♥♣")
+                print(card)
+                value = int(card)
+            else:
+                if int(card[0]) in range(2,11):
+                    value = int(card[0])   
+        return value
 
-    return isPenalty
+    def isCardPenalty(self,card):
+        isPenalty = False
+        penaltyValues =[2,3,5]
+        for value in penaltyValues:
+            if self.checkCardValue(card) == value:
+                isPenalty = True
+    
+        return isPenalty
 
-def checkIfCardCanGoOnTable(card,cardsOnTable):
+    def isCardFunctional(self,card):
+        isFunctional = False
+        functionCards = ["4","J","Q","A"]
+        for sign in functionCards:
+            if card[0] == sign:
+                isFunctional = True
+        return isFunctional
+
+    def cardFunction(self,card):
+        function = " "
+        if card[0] == "4":
+            function = "Wait"
+        elif card[0] == "J":
+            function = "Value Demand"
+        elif card[0] == "Q":
+            function = "Any Card"
+        elif card[0] == "A":
+            function = "Suit Demand"
+        return function
     
-    isCardOk = False
-    
-    cardLen = len(card)
-    cardOnTop = cardsOnTable[-1]
-    cardOnTopLen = len(cardOnTop)
-    
-    if cardLen == 2 and cardOnTopLen == 2:
-        if card[0] == cardOnTop[0] or card[1] == cardOnTop[1]:#Check if value or suit are the same
-            isCardOk = True
-    elif cardLen == 3 and cardOnTopLen == 3:#10 on table and player also want to put 10 
-       isCardOk = True
-    elif  cardLen == 3 and cardOnTopLen == 2:#Some card on table and player want to put 10 card with this same suit
-        if card[2] == cardOnTop[1]:
-            isCardOk = True
-    elif cardLen == 2 and cardOnTopLen == 3:#10 on table and player want to put card with this same suit
-        if card[1] == cardOnTop[2]:
-            isCardOk = True
-    return isCardOk 
-            
-    
-    
+    def checkIfCardCanGoOnTable(self,cardsOnTable):
+        isCardOk = False
+        card = self.face
+        cardLen = len(card)
+        cardOnTop = cardsOnTable[-1].face
+        cardOnTopLen = len(cardOnTop)
+        
+        if self.penalty:
+            print("")
+        else:
+            if card[0] == "Q":#Quin on everything, everything on Quin
+                isCardOk = True
+            else:
+                if cardLen == 2 and cardOnTopLen == 2:
+                    if card[0] == cardOnTop[0] or card[1] == cardOnTop[1]:#Check if value or suit are the same
+                        isCardOk = True
+                elif cardLen == 3 and cardOnTopLen == 3:#10 on table and player also want to put 10 
+                   isCardOk = True
+                elif  cardLen == 3 and cardOnTopLen == 2:#Some card on table and player want to put 10 card with this same suit
+                    if card[2] == cardOnTop[1]:
+                        isCardOk = True
+                elif cardLen == 2 and cardOnTopLen == 3:#10 on table and player want to put card with this same suit
+                    if card[1] == cardOnTop[2]:
+                        isCardOk = True
+        return isCardOk 
 
 class Player:
     def __init__(self, playerName,deck):
@@ -103,11 +132,17 @@ class Player:
         cards = []
         for i in range(5):
             deckLength = len(deck) - 1
-            cardNumber = randint(0,deckLength)
-            cards.append(deck[cardNumber])
-            deck.pop(cardNumber)
+            randomNumber = randint(0,deckLength)
+            randomCard = deck[randomNumber]
+            CardToGo = Card(randomCard) 
+            cards.append(CardToGo)
+            deck.pop(randomNumber)
         return cards
-
+    
+    def showCards(self):
+        for card in self.cardsOnHand:
+            print(str(card.face), end=" ")
+    
 
 
 cardDeck = createDeck()
@@ -117,6 +152,9 @@ message = " "
 
 print(cardDeck)
 
+#Lets Play :)
+
+#Main loop
 while(True):
     
     displayTitleBar()
@@ -130,23 +168,33 @@ while(True):
     if playerTwoName == "x":
         break
     
+    #Pick first card on table loop
+    FirstCard = ""
+    while(True):
+        randomNumber = randint(0,len(cardDeck) -1)
+        randomCard = cardDeck[randomNumber]
+        FirstCard = Card(randomCard)
+        if FirstCard.penalty == True or FirstCard.isFunctional == True:
+            continue
+        else:
+            cardsOnTable.append(FirstCard)
+            cardDeck.pop(randomNumber)
+            break
+   
     Player1 = Player(playerOneName,cardDeck)
     Player2 = Player(playerTwoName,cardDeck)
     
-    #First card on table
-    firstCard = randint(0,len(cardDeck) -1)
-    cardsOnTable.append(cardDeck[firstCard])
-    cardDeck.pop(firstCard)
     
     actualPlayer = Player1
-    
+    #Actual play loop
     while(True):
         displayTitleBar()
         print("\n")
         print(actualPlayer.name , "is your turn.")
-        print("Your cards: " + str(actualPlayer.cardsOnHand))
+        print("Your cards: ")
+        actualPlayer.showCards()
         print("\n")
-        print("Card on table: " + str(cardsOnTable[-1]))
+        print("Card on table: " + str(cardsOnTable[-1].face))
         
         if message != " ":
             print("\n")
@@ -159,21 +207,27 @@ while(True):
             message = "Wrong type of data. Please try again."
             continue
         
-        if cardToPutNumber == 0:#Player take card from the deck because he doesnt have proper card on hand
+        #Check if entered number is not out of the range 
+        if cardToPutNumber > len(actualPlayer.cardsOnHand) or cardToPutNumber < 0:
+            message = "Card number out of range. Please enter proper number"
+            continue
+        
+        #Player take card from the deck
+        if cardToPutNumber == 0:
             randomNumber = randint(0, len(cardDeck)-1)
-            actualPlayer.cardsOnHand.append(cardDeck[randomNumber])
+            randomCard = cardDeck[randomNumber]
+            randomCard = Card(randomCard)
+            actualPlayer.cardsOnHand.append(randomCard)
             cardDeck.pop(randomNumber)
             if actualPlayer == Player1:
                 actualPlayer = Player2
             else:
                 actualPlayer = Player1    
-            
+        #Card go on table   
         else:
             cardToPut = actualPlayer.cardsOnHand[cardToPutNumber-1]
             
-            isCardOk = checkIfCardCanGoOnTable(cardToPut,cardsOnTable)
-            
-            if isCardOk:
+            if  cardToPut.checkIfCardCanGoOnTable(cardsOnTable):
                 cardsOnTable.append(cardToPut)
                 actualPlayer.cardsOnHand.pop(cardToPutNumber-1)
                 
@@ -182,7 +236,7 @@ while(True):
                     print("\n")
                     print(actualPlayer.name + " WON THE GAME !!!")
                     break
-                        
+                #Player changing       
                 if actualPlayer == Player1:
                     actualPlayer = Player2
                 else:

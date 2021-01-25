@@ -61,7 +61,6 @@ class Card:
         else:
             if len(card) == 3:#If it is 10
                 card = card.strip("♠♦♥♣")
-                print(card)
                 value = int(card)
             else:
                 if int(card[0]) in range(2,11):
@@ -72,7 +71,9 @@ class Card:
         isPenalty = False
         penaltyValues =[2,3,5]
         for value in penaltyValues:
-            if self.checkCardValue(card) == value:
+            if self.checkCardValue(card) < 4 and self.checkCardValue(card) == value:
+                isPenalty = True
+            elif self.checkCardValue(card) == 5 and card[1] == "K":
                 isPenalty = True
     
         return isPenalty
@@ -97,30 +98,34 @@ class Card:
             function = "Suit Demand"
         return function
     
-    def checkIfCardCanGoOnTable(self,cardsOnTable):
+    def checkIfCardCanGoOnTable(self,cardsOnTable, lastPlayerTookPenaltyCards):
         isCardOk = False
         card = self.face
         cardLen = len(card)
         cardOnTop = cardsOnTable[-1].face
         cardOnTopLen = len(cardOnTop)
         
-        if self.penalty:
-            print("")
-        else:
-            if card[0] == "Q":#Quin on everything, everything on Quin
+        if lastPlayerTookPenaltyCards == False and self.isCardPenalty(cardOnTop) == True:
+            if self.isCardPenalty(cardOnTop):
+                if self.penalty and self.value == self.checkCardValue(cardOnTop):
+                    isCardOk == True
+        elif self.isCardPenalty(cardOnTop):
+                if self.penalty and self.value == self.checkCardValue(cardOnTop):
+                    isCardOk == True
+        elif card[0] == "Q" or cardOnTop[0] == "Q":#Quin on everything, everything on Quin
                 isCardOk = True
-            else:
-                if cardLen == 2 and cardOnTopLen == 2:
-                    if card[0] == cardOnTop[0] or card[1] == cardOnTop[1]:#Check if value or suit are the same
-                        isCardOk = True
-                elif cardLen == 3 and cardOnTopLen == 3:#10 on table and player also want to put 10 
-                   isCardOk = True
-                elif  cardLen == 3 and cardOnTopLen == 2:#Some card on table and player want to put 10 card with this same suit
-                    if card[2] == cardOnTop[1]:
-                        isCardOk = True
-                elif cardLen == 2 and cardOnTopLen == 3:#10 on table and player want to put card with this same suit
-                    if card[1] == cardOnTop[2]:
-                        isCardOk = True
+        else:
+            if cardLen == 2 and cardOnTopLen == 2:
+                if card[0] == cardOnTop[0] or card[1] == cardOnTop[1]:#Check if value or suit are the same
+                    isCardOk = True
+            elif cardLen == 3 and cardOnTopLen == 3:#10 on table and player also want to put 10 
+                isCardOk = True
+            elif  cardLen == 3 and cardOnTopLen == 2:#Some card on table and player want to put 10 card with this same suit
+                if card[2] == cardOnTop[1]:
+                    isCardOk = True
+            elif cardLen == 2 and cardOnTopLen == 3:#10 on table and player want to put card with this same suit
+                if card[1] == cardOnTop[2]:
+                    isCardOk = True
         return isCardOk 
 
 class Player:
@@ -148,6 +153,16 @@ class Player:
 cardDeck = createDeck()
 cardsOnTable = []
 penaltyCardsOnTable = []
+penaltyRound = False
+playerTookPenaltyCards = False
+
+def penaltyCardsValue(cards):
+    value = 0
+    for card in cards:
+        value += card.value
+    return value
+
+
 message = " "
 
 print(cardDeck)
@@ -207,6 +222,14 @@ while(True):
             message = "Wrong type of data. Please try again."
             continue
         
+        #Check if card on table is penalty
+        cardOnTop = cardsOnTable[-1]
+        if (cardOnTop.penalty == True and len(penaltyCardsOnTable) == 0):
+            penaltyRound = True
+            penaltyCardsOnTable.append(cardOnTop)
+        elif cardOnTop.penalty == True and cardOnTop.face != penaltyCardsOnTable[-1].face:
+            penaltyCardsOnTable.append(cardOnTop)
+            
         #Check if entered number is not out of the range 
         if cardToPutNumber > len(actualPlayer.cardsOnHand) or cardToPutNumber < 0:
             message = "Card number out of range. Please enter proper number"
@@ -214,11 +237,21 @@ while(True):
         
         #Player take card from the deck
         if cardToPutNumber == 0:
-            randomNumber = randint(0, len(cardDeck)-1)
-            randomCard = cardDeck[randomNumber]
-            randomCard = Card(randomCard)
-            actualPlayer.cardsOnHand.append(randomCard)
-            cardDeck.pop(randomNumber)
+            cardsNumberToTake = 1
+            if penaltyRound == True and playerTookPenaltyCards == False:
+                cardsNumberToTake = penaltyCardsValue(penaltyCardsOnTable)
+            
+            for i in range(cardsNumberToTake):
+                randomNumber = randint(0, len(cardDeck)-1)
+                randomCard = cardDeck[randomNumber]
+                randomCard = Card(randomCard)
+                actualPlayer.cardsOnHand.append(randomCard)
+                cardDeck.pop(randomNumber)
+                if i == (cardsNumberToTake -1):
+                    playerTookPenaltyCards = True
+                    break
+            
+            
             if actualPlayer == Player1:
                 actualPlayer = Player2
             else:
@@ -227,9 +260,16 @@ while(True):
         else:
             cardToPut = actualPlayer.cardsOnHand[cardToPutNumber-1]
             
-            if  cardToPut.checkIfCardCanGoOnTable(cardsOnTable):
+            if  cardToPut.checkIfCardCanGoOnTable(cardsOnTable, playerTookPenaltyCards):
                 cardsOnTable.append(cardToPut)
                 actualPlayer.cardsOnHand.pop(cardToPutNumber-1)
+                #Reseting penalty round:
+                if playerTookPenaltyCards == True:
+                    playerTookPenaltyCards = False
+                    penaltyRound = False
+                    penaltyCardsOnTable = []
+                    
+                    
                 
                 #Check if player win
                 if len(actualPlayer.cardsOnHand) == 0:

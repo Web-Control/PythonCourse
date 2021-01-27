@@ -104,28 +104,26 @@ class Card:
         cardLen = len(card)
         cardOnTop = cardsOnTable[-1].face
         cardOnTopLen = len(cardOnTop)
-        
+       
         if lastPlayerTookPenaltyCards == False and self.isCardPenalty(cardOnTop) == True:
-            if self.isCardPenalty(cardOnTop):
-                if self.penalty and self.value == self.checkCardValue(cardOnTop):
-                    isCardOk == True
-        elif self.isCardPenalty(cardOnTop):
-                if self.penalty and self.value == self.checkCardValue(cardOnTop):
-                    isCardOk == True
-        elif card[0] == "Q" or cardOnTop[0] == "Q":#Quin on everything, everything on Quin
+            if self.penalty == True and self.value == self.checkCardValue(cardOnTop):
                 isCardOk = True
         else:
-            if cardLen == 2 and cardOnTopLen == 2:
-                if card[0] == cardOnTop[0] or card[1] == cardOnTop[1]:#Check if value or suit are the same
+            if card[0] == "Q" or cardOnTop[0] == "Q":#Quin on everything, everything on Quin
                     isCardOk = True
-            elif cardLen == 3 and cardOnTopLen == 3:#10 on table and player also want to put 10 
-                isCardOk = True
-            elif  cardLen == 3 and cardOnTopLen == 2:#Some card on table and player want to put 10 card with this same suit
-                if card[2] == cardOnTop[1]:
+            else:
+                if cardLen == 2 and cardOnTopLen == 2:
+                    if card[0] == cardOnTop[0] or card[1] == cardOnTop[1]:#Check if value or suit are the same
+                        isCardOk = True
+                elif cardLen == 3 and cardOnTopLen == 3:#10 on table and player also want to put 10 
                     isCardOk = True
-            elif cardLen == 2 and cardOnTopLen == 3:#10 on table and player want to put card with this same suit
-                if card[1] == cardOnTop[2]:
-                    isCardOk = True
+                elif  cardLen == 3 and cardOnTopLen == 2:#Some card on table and player want to put 10 card with this same suit
+                    if card[2] == cardOnTop[1]:
+                        isCardOk = True
+                elif cardLen == 2 and cardOnTopLen == 3:#10 on table and player want to put card with this same suit
+                    if card[1] == cardOnTop[2]:
+                        isCardOk = True
+        print("Card oK: ", isCardOk)
         return isCardOk 
 
 class Player:
@@ -241,6 +239,16 @@ while(True):
             if penaltyRound == True and playerTookPenaltyCards == False:
                 cardsNumberToTake = penaltyCardsValue(penaltyCardsOnTable)
             
+            #Check if deck have enough cards, if dont make a new one
+            if cardsNumberToTake > len(cardDeck):
+                cardDeck = createDeck()
+                topCardIndex = cardDeck.index(cardsOnTable[-1].face)
+                cardDeck.pop(topCardIndex)
+                topCardOnTable = cardsOnTable[-1]
+                cardsOnTable.clear()
+                cardsOnTable.append(topCardOnTable)
+                
+            #Taking crads from deck
             for i in range(cardsNumberToTake):
                 randomNumber = randint(0, len(cardDeck)-1)
                 randomCard = cardDeck[randomNumber]
@@ -259,7 +267,7 @@ while(True):
         #Card go on table   
         else:
             cardToPut = actualPlayer.cardsOnHand[cardToPutNumber-1]
-            
+            print(cardToPut.penalty, cardToPut.value, playerTookPenaltyCards)
             if  cardToPut.checkIfCardCanGoOnTable(cardsOnTable, playerTookPenaltyCards):
                 cardsOnTable.append(cardToPut)
                 actualPlayer.cardsOnHand.pop(cardToPutNumber-1)
